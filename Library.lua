@@ -118,6 +118,14 @@ function Library:AttemptSave()
     end;
 end;
 
+-- У самому верху файла (якщо ще не додав)
+local function AddCorner(obj, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 8)
+    c.Parent = obj
+end
+
+-- Оновлена функція
 function Library:Create(Class, Properties)
     local _Instance = Class;
 
@@ -128,6 +136,20 @@ function Library:Create(Class, Properties)
     for Property, Value in next, Properties do
         _Instance[Property] = Value;
     end;
+
+    -- Якщо це UI-елемент, якому потрібні заокруглення — додаємо
+    local RoundedClasses = {
+        Frame = true,
+        TextButton = true,
+        TextBox = true,
+        ScrollingFrame = true,
+        ImageButton = true,
+        ImageLabel = true
+    }
+
+    if RoundedClasses[_Instance.ClassName] then
+        AddCorner(_Instance, 8)
+    end
 
     return _Instance;
 end;
