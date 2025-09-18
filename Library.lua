@@ -126,17 +126,130 @@ local function AddCorner(obj, radius)
     c.Parent = obj
 end
 
--- переписана функція створення інстансів
+-- ======== Robust rounded UI patch ========
+-- Замініть старі AddCorner / Library:Create на цей блок
+
+-- Параметри (можна змінити)
+Library.CornerRadius = Library.CornerRadius or 8
+Library.StrokeThickness = Library.StrokeThickness or 1
+Library.AutoRoundChildren = true -- чи заокруглювати дочірні елементи при створенні
+
+-- helper: які Gui-и ми заокруглюємо
+local function ShouldRound(obj)
+    if typeof(obj) ~= "Instance" then return false end
+    -- підтримка спадкоємності :IsA
+    return obj:IsA("Frame")
+        or obj:IsA("TextButton")
+        or obj:IsA("TextBox")
+        or obj:IsA("ScrollingFrame")
+        or obj:IsA("ImageButton")
+        or obj:IsA("ImageLabel")
+        or obj:IsA("TextLabel")
+end
+
+-- додає або оновлює UICorner (не дублює)
+local function AddCorner(obj, radius)
+    if not ShouldRound(obj) then return end
+    radius = tonumber(radius) or Library.CornerRadius or 8
+
+    local existing = obj:FindFirstChildOfClass("UICorner")
+    if existing then
+        existing.CornerRadius = UDim.new(0, radius)
+    else
+        local c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0, radius)
+        c.Parent = obj
+    end
+end
+
+-- додає або оновлює UIStroke
+local function ApplyStroke(obj, thickness, color)
+    if not ShouldRound(obj) then return end
+    thickness = tonumber(thickness) or Library.StrokeThickness or 1
+    color = color or Library.OutlineColor
+
+    local existing = obj:FindFirstChildOfClass("UIStroke")
+    if existing then
+        existing.Thickness = thickness
+        existing.Color = color
+    else
+        local s = Instance.new("UIStroke")
+        s.Thickness = thickness
+        s.Color = color
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        s.Parent = obj
+    end
+end
+
+-- ОНОВЛЕНА Library:Create (працює з string і з існуючим Instance)
 function Library:Create(Class, Properties)
     local _Instance = Class
 
-    if type(Class) == 'string' then
+    if type(Class) == "string" then
         _Instance = Instance.new(Class)
     end
 
+    Properties = Properties or {}
+
+    -- встановлюємо властивості, Parent останнім (щоб уникнути раннього батькування)
+    local parent = Properties.Parent
     for Property, Value in next, Properties do
-        _Instance[Property] = Value
+        if Property ~= "Parent" then
+            pcall(function() _Instance[Property] = Value end)
+        end
     end
+    if parent then
+        _Instance.Parent = parent
+    end
+
+    -- автоматичне заокруглення / stroke
+    if ShouldRound(_Instance) then
+        local radius = Properties.CornerRadius or Library.CornerRadius
+        AddCorner(_Instance, radius)
+
+        if not Properties.NoStroke then
+            ApplyStroke(_Instance, Properties.StrokeThickness or Library.StrokeThickness, Properties.StrokeColor or Library.OutlineColor)
+        end
+    end
+
+    -- якщо треба — заокруглити дочірні елементи, що вже є
+    if Library.AutoRoundChildren then
+        for _, desc in next, _Instance:GetDescendants() do
+            if ShouldRound(desc) then
+                local dradius = Properties.CornerRadius or Library.CornerRadius
+                AddCorner(desc, dradius)
+                if not Properties.NoStroke then
+                    ApplyStroke(desc, Properties.StrokeThickness or Library.StrokeThickness, Properties.StrokeColor or Library.OutlineColor)
+                end
+            end
+        end
+    end
+
+    return _Instance
+end
+
+-- Функція для одноразового апдейту всього GUI (корисно при відлагодженні)
+function Library:RoundAll(root)
+    root = root or Library.ScreenGui
+    if not root then return end
+    for _, obj in next, root:GetDescendants() do
+        if ShouldRound(obj) then
+            AddCorner(obj)
+            ApplyStroke(obj)
+        end
+    end
+end
+
+-- Автоматично підключаємося до майбутніх доданих елементів (щоб заокруглювало clone / runtime create)
+if Library.ScreenGui then
+    Library:GiveSignal(Library.ScreenGui.DescendantAdded:Connect(function(obj)
+        if ShouldRound(obj) then
+            AddCorner(obj)
+            ApplyStroke(obj)
+        end
+    end))
+end
+-- ======== End patch ========
 
     -- автододавання UICorner до потрібних класів
     local RoundedClasses = {
