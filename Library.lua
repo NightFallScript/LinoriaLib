@@ -119,25 +119,26 @@ function Library:AttemptSave()
 end;
 
 -- У самому верху файла (якщо ще не додав)
+-- функція для додавання закруглень
 local function AddCorner(obj, radius)
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, radius or 8)
     c.Parent = obj
 end
 
--- Оновлена функція
+-- переписана функція створення інстансів
 function Library:Create(Class, Properties)
-    local _Instance = Class;
+    local _Instance = Class
 
     if type(Class) == 'string' then
-        _Instance = Instance.new(Class);
-    end;
+        _Instance = Instance.new(Class)
+    end
 
     for Property, Value in next, Properties do
-        _Instance[Property] = Value;
-    end;
+        _Instance[Property] = Value
+    end
 
-    -- Якщо це UI-елемент, якому потрібні заокруглення — додаємо
+    -- автододавання UICorner до потрібних класів
     local RoundedClasses = {
         Frame = true,
         TextButton = true,
@@ -148,22 +149,11 @@ function Library:Create(Class, Properties)
     }
 
     if RoundedClasses[_Instance.ClassName] then
-        AddCorner(_Instance, 8)
+        AddCorner(_Instance, 8) -- можна міняти 8 на інший радіус
     end
 
-    return _Instance;
-end;
-
-function Library:ApplyTextStroke(Inst)
-    Inst.TextStrokeTransparency = 1;
-
-    Library:Create('UIStroke', {
-        Color = Color3.new(0, 0, 0);
-        Thickness = 1;
-        LineJoinMode = Enum.LineJoinMode.Miter;
-        Parent = Inst;
-    });
-end;
+    return _Instance
+end
 
 function Library:CreateLabel(Properties, IsHud)
     local _Instance = Library:Create('TextLabel', {
