@@ -46,6 +46,56 @@ local Library = {
     ScreenGui = ScreenGui;
 };
 
+Library.CornerRadius = 5
+Library.StrokeThickness = 1
+
+local function ShouldRound(obj)
+    return obj:IsA("Frame")
+        or obj:IsA("TextButton")
+        or obj:IsA("TextBox")
+        or obj:IsA("ScrollingFrame")
+        or obj:IsA("ImageButton")
+        or obj:IsA("ImageLabel")
+        or obj:IsA("TextLabel")
+end
+
+local function AddCorner(obj, radius)
+    if not ShouldRound(obj) then return end
+    local r = radius or Library.CornerRadius
+    local c = obj:FindFirstChildOfClass("UICorner")
+    if not c then
+        c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0, r)
+        c.Parent = obj
+    else
+        c.CornerRadius = UDim.new(0, r)
+    end
+end
+
+local function AddStroke(obj, thickness)
+    if not ShouldRound(obj) then return end
+    local s = obj:FindFirstChildOfClass("UIStroke")
+    if not s then
+        s = Instance.new("UIStroke")
+        s.Thickness = thickness or Library.StrokeThickness
+        s.Color = Color3.fromRGB(0, 0, 0)
+        s.Transparency = 0.5
+        s.Parent = obj
+    end
+end
+
+-- Хук Library:Create, щоб все нове було з округленням
+local OldCreate = Library.Create
+function Library:Create(Class, Properties)
+    local inst = typeof(Class) == "string" and Instance.new(Class) or Class
+    for prop, val in next, Properties do
+        inst[prop] = val
+    end
+    AddCorner(inst)
+    AddStroke(inst)
+    return inst
+end
+
 local RainbowStep = 0
 local Hue = 0
 
