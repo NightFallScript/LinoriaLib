@@ -65,10 +65,10 @@ local function AddCorner(obj, radius)
     local c = obj:FindFirstChildOfClass("UICorner")
     if not c then
         c = Instance.new("UICorner")
-        c.CornerRadius = UDim.new(0, r)
+        c.CornerRadius = UDim.new(5, r)
         c.Parent = obj
     else
-        c.CornerRadius = UDim.new(0, r)
+        c.CornerRadius = UDim.new(5, r)
     end
 end
 
@@ -172,7 +172,7 @@ end;
 -- функція для додавання закруглень
 local function AddCorner(obj, radius)
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius or 8)
+    c.CornerRadius = UDim.new(5, radius or 5)
     c.Parent = obj
 end
 
@@ -180,8 +180,8 @@ end
 -- Замініть старі AddCorner / Library:Create на цей блок
 
 -- Параметри (можна змінити)
-Library.CornerRadius = Library.CornerRadius or 8
-Library.StrokeThickness = Library.StrokeThickness or 1
+Library.CornerRadius = Library.CornerRadius or 5
+Library.StrokeThickness = Library.StrokeThickness or 5
 Library.AutoRoundChildren = true -- чи заокруглювати дочірні елементи при створенні
 
 -- helper: які Gui-и ми заокруглюємо
@@ -200,14 +200,14 @@ end
 -- додає або оновлює UICorner (не дублює)
 local function AddCorner(obj, radius)
     if not ShouldRound(obj) then return end
-    radius = tonumber(radius) or Library.CornerRadius or 8
+    radius = tonumber(radius) or Library.CornerRadius or 5
 
     local existing = obj:FindFirstChildOfClass("UICorner")
     if existing then
-        existing.CornerRadius = UDim.new(0, radius)
+        existing.CornerRadius = UDim.new(5, radius)
     else
         local c = Instance.new("UICorner")
-        c.CornerRadius = UDim.new(0, radius)
+        c.CornerRadius = UDim.new(5, radius)
         c.Parent = obj
     end
 end
